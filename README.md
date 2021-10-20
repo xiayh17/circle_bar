@@ -19,4 +19,7 @@ The goal of circle_bar is to plot things below
 
 ## text_on_bar
 
-![zxUEBj](https://cdn.jsdelivr.net/gh/xiayh17/Figs@main/uPic/zxUEBj.png)
+![KqF9eB](https://cdn.jsdelivr.net/gh/xiayh17/Figs@main/uPic/KqF9eB.png)
+
+![vHSu3L](https://cdn.jsdelivr.net/gh/xiayh17/Figs@main/uPic/vHSu3L.png)
+
