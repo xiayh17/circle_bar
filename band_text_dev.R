@@ -15,14 +15,16 @@ strwidth(labels[[2]],units =  "inches")
 
 w_2 <- strw[[2]]
 
+theta = atan2(w_2,1)
+
 ls <- list()
 for (i in seq_along(w_2)) {
   
   if (i == 1) {
     ls[[i]] <- w_2[[i]]
-  }else {
+  }else 
     ls[[i]] <- sum(w_2[1:i])
-  }
+  
 }
 
 y_theta <- (unlist(ls) - min(unlist(ls)))/pi
