@@ -4,6 +4,10 @@ library(forcats)
 library(ggplot2)
 library(shadowtext)
 library(ggstatsplot)
+library(ggfun)
+library(ggnewscale)
+library(grid)
+library(dplyr)
 
 # https://community.rstudio.com/t/how-to-start-text-label-from-extreme-left-in-bar-plot-using-geom-col-and-geom-text-in-ggplot2/77256
 
@@ -86,3 +90,69 @@ ggplot(dat, aes(pvalue, Description, fill = group)) +
         axis.text.y = element_blank(),
         # axis.text.x = element_blank(),
         axis.ticks.y = element_blank())
+
+go_ALL <- enrichGO(de, 'org.Hs.eg.db', ont="ALL", pvalueCutoff=0.01)
+
+split_color = RColorBrewer::brewer.pal(3,"Dark2")
+bar_color = rev(RColorBrewer::brewer.pal(5,"GnBu")[3:5])
+
+dat <- go_ALL@result %>%
+  group_by(ONTOLOGY) %>%
+  mutate(Description = fct_reorder(Description,Count)) %>%
+  top_n(10) %>%
+  mutate(myY = as.numeric(Description))
+
+p <- ggplot(dat,aes(Count, myY, fill = p.adjust)) +
+  geom_shadowtext(aes(color = ONTOLOGY, label = Description),
+                  x = 0,
+                  nudge_y = -0.5,
+                  hjust = -0.01, show.legend = F,
+                  # position=position_dodge2(width=0.9),
+                  size = 4,
+                  bg.colour='#ffffff',bg.r = NA) +
+  scale_color_manual(values = split_color)+
+  new_scale_color() +
+  geom_segment(aes(x=0,y=myY-1,xend = Count,yend = myY-1,color = p.adjust),size = 1,lineend = 'round') +
+  scale_y_continuous(name = "Description", breaks = dat$myY, labels = dat$Description, expand = c(0, 0.5)) +
+  # geom_col(width = .15,alpha = 1,aes(color = p.adjust),
+  #          position=position_dodge2(padding = 0.9)) +
+  scale_color_gradientn(colours = bar_color) +
+  # geom_vline(aes(xintercept = 0,colour = ONTOLOGY),size = 0.5,show.legend = F)+
+  # geom_text(aes(label = Description,color = ONTOLOGY),
+  #           x = 0,
+  #           hjust = 0,
+  #           size = 4) +
+  scale_x_continuous(expand = c(0, 0))+
+  theme_minimal()+
+  theme(legend.position = "right",
+        # plot.margin=margin(t= 100,b=2,l=-2,r= 2,unit="pt"),
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_line(linetype = "dotted"),
+        panel.grid.minor = element_blank(),
+        # axis.line = element_blank(),
+        axis.text.y = element_blank(),
+        # axis.text.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p <- p +
+  facet_grid(ONTOLOGY~., scale="free", switch="both") +
+  theme(strip.background=element_roundrect(fill=NA, color=NA, r=0.31415,size = 0.5,linetype = "dotted"))
+
+g <- ggplot_gtable(ggplot_build(p))
+strip_both <- which(grepl('strip-', g$layout$name))
+
+k <- 1
+
+for (i in strip_both) {
+  j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+  m <- which(grepl('text', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+  g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$col <- split_color[k]
+  g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$lty <- "solid"
+  g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- split_color[k]
+  g$grobs[[i]]$grobs[[1]]$children[[m]]$children[[1]]$gp$col <- "white"
+  k <- k+1
+}
+
+grid.draw(g)
+
+ggsave(filename="ab.pdf", plot=g)
